@@ -1,146 +1,156 @@
 /* ============================================================
    Playful portfolio interactions in vanilla JS
+   Each function owns one behaviour. No framework, no build step.
    ============================================================ */
 (function () {
   "use strict";
 
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const hasObserver = "IntersectionObserver" in window;
 
-  /* ---------- Feather icons ---------- */
-  if (window.feather) window.feather.replace();
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
-  /* ---------- Start at the top after a refresh ---------- */
-  const navigationEntry = performance.getEntriesByType("navigation")[0];
-  if (navigationEntry && navigationEntry.type === "reload" && !window.location.hash) {
+  function initIcons() {
+    if (window.feather) window.feather.replace();
+  }
+
+  function initScrollReset() {
+    const navigation = performance.getEntriesByType("navigation")[0];
+    if (!navigation || navigation.type !== "reload" || window.location.hash) return;
+
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
     window.addEventListener("load", () => window.scrollTo(0, 0), { once: true });
   }
 
-  /* ---------- Sticky header shadow ---------- */
-  const header = document.querySelector(".site-header");
-  const onScroll = () => {
-    if (header) header.classList.toggle("scrolled", window.scrollY > 10);
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
+  function initHeader() {
+    const header = $(".site-header");
+    if (!header) return;
 
-  /* ---------- Mobile navigation ---------- */
-  const navToggle = document.getElementById("nav-toggle");
-  const navLinks = document.getElementById("nav-links");
+    const update = () => header.classList.toggle("scrolled", window.scrollY > 10);
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  }
 
-  const closeMenu = () => {
-    if (!navLinks || !navToggle) return;
-    navLinks.classList.remove("open");
-    navToggle.classList.remove("open");
-    navToggle.setAttribute("aria-expanded", "false");
-    navToggle.setAttribute("aria-label", "Open menu");
-  };
+  function initMenu() {
+    const toggle = $("#nav-toggle");
+    const links = $("#nav-links");
+    if (!toggle || !links) return;
 
-  if (navToggle && navLinks) {
-    navToggle.addEventListener("click", () => {
-      const isOpen = navLinks.classList.toggle("open");
-      navToggle.classList.toggle("open", isOpen);
-      navToggle.setAttribute("aria-expanded", String(isOpen));
-      navToggle.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
+    const close = () => {
+      links.classList.remove("open");
+      toggle.classList.remove("open");
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-label", "Open menu");
+    };
+
+    toggle.addEventListener("click", () => {
+      const isOpen = links.classList.toggle("open");
+      toggle.classList.toggle("open", isOpen);
+      toggle.setAttribute("aria-expanded", String(isOpen));
+      toggle.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
     });
 
-    navLinks.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
-
+    $$("a", links).forEach((link) => link.addEventListener("click", close));
     document.addEventListener("click", (event) => {
-      if (!navLinks.contains(event.target) && !navToggle.contains(event.target)) closeMenu();
+      if (!links.contains(event.target) && !toggle.contains(event.target)) close();
     });
-
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeMenu();
+      if (event.key === "Escape") close();
     });
   }
 
-  /* ---------- Active nav link on scroll ---------- */
-  const navAnchors = Array.from(document.querySelectorAll(".nav-link"));
-  const sections = navAnchors
-    .map((link) => document.querySelector(link.getAttribute("href")))
-    .filter(Boolean);
+  function initActiveLinks() {
+    const anchors = $$(".nav-link");
+    const sections = anchors
+      .map((link) => $(link.getAttribute("href")))
+      .filter(Boolean);
+    if (!hasObserver || !sections.length) return;
 
-  if ("IntersectionObserver" in window && sections.length) {
-    const sectionObserver = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          navAnchors.forEach((link) => {
+          anchors.forEach((link) => {
             link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
           });
         });
       },
       { rootMargin: "-45% 0px -50% 0px" }
     );
-    sections.forEach((section) => sectionObserver.observe(section));
+    sections.forEach((section) => observer.observe(section));
   }
 
-  /* ---------- Scroll reveal ---------- */
-  const revealItems = document.querySelectorAll(".reveal");
+  function initReveal() {
+    const items = $$(".reveal");
+    if (reduceMotion || !hasObserver) {
+      items.forEach((item) => item.classList.add("is-visible"));
+      return;
+    }
 
-  if (prefersReducedMotion || !("IntersectionObserver" in window)) {
-    revealItems.forEach((item) => item.classList.add("is-visible"));
-  } else {
-    const revealObserver = new IntersectionObserver(
-      (entries, observer) => {
+    const observer = new IntersectionObserver(
+      (entries, instance) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          const siblings = Array.from(entry.target.parentElement.children).filter((el) => el.classList.contains("reveal"));
-          const index = siblings.indexOf(entry.target);
-          entry.target.style.transitionDelay = Math.max(0, index) * 80 + "ms";
+          const siblings = $$(".reveal", entry.target.parentElement);
+          entry.target.style.transitionDelay = Math.max(0, siblings.indexOf(entry.target)) * 80 + "ms";
           entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
+          instance.unobserve(entry.target);
         });
       },
       { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
     );
-    revealItems.forEach((item) => revealObserver.observe(item));
+    items.forEach((item) => observer.observe(item));
   }
 
-  /* ---------- Count-up stats ---------- */
-  const counters = document.querySelectorAll("[data-count]");
-
-  const runCounter = (el) => {
-    const target = parseInt(el.getAttribute("data-count"), 10) || 0;
-    if (prefersReducedMotion) {
-      el.textContent = target;
+  function countUp(element) {
+    const target = parseInt(element.dataset.count, 10) || 0;
+    if (reduceMotion) {
+      element.textContent = target;
       return;
     }
+
     const duration = 1300;
     const start = performance.now();
     const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
     const tick = (now) => {
       const progress = Math.min((now - start) / duration, 1);
-      el.textContent = Math.round(target * easeOut(progress));
+      element.textContent = Math.round(target * easeOut(progress));
       if (progress < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  };
+  }
 
-  if ("IntersectionObserver" in window) {
-    const countObserver = new IntersectionObserver(
-      (entries, observer) => {
+  function initCounters() {
+    const counters = $$("[data-count]");
+    if (!hasObserver) {
+      counters.forEach(countUp);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries, instance) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          runCounter(entry.target);
-          observer.unobserve(entry.target);
+          countUp(entry.target);
+          instance.unobserve(entry.target);
         });
       },
       { threshold: 0.6 }
     );
-    counters.forEach((counter) => countObserver.observe(counter));
-  } else {
-    counters.forEach(runCounter);
+    counters.forEach((counter) => observer.observe(counter));
   }
 
-  /* ---------- Rotating hero word ---------- */
-  const rotator = document.querySelector(".highlight");
-  if (rotator && !prefersReducedMotion) {
+  function initRotator() {
+    const rotator = $(".highlight");
+    if (!rotator || reduceMotion) return;
+
     const words = ["delightful", "thoughtful", "playful", "human"];
     let index = 0;
+
     window.setInterval(() => {
       rotator.classList.add("is-swapping");
       window.setTimeout(() => {
@@ -151,9 +161,10 @@
     }, 3000);
   }
 
-  /* ---------- Magnetic buttons ---------- */
-  if (!prefersReducedMotion && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    document.querySelectorAll(".magnetic").forEach((button) => {
+  function initMagneticButtons() {
+    if (reduceMotion || !canHover) return;
+
+    $$(".magnetic").forEach((button) => {
       button.addEventListener("mousemove", (event) => {
         const rect = button.getBoundingClientRect();
         const x = (event.clientX - rect.left - rect.width / 2) * 0.18;
@@ -166,9 +177,10 @@
     });
   }
 
-  /* ---------- 3D tilt on cards ---------- */
-  if (!prefersReducedMotion && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    document.querySelectorAll(".tilt").forEach((card) => {
+  function initCardTilt() {
+    if (reduceMotion || !canHover) return;
+
+    $$(".tilt").forEach((card) => {
       card.addEventListener("mousemove", (event) => {
         const rect = card.getBoundingClientRect();
         const x = (event.clientX - rect.left) / rect.width - 0.5;
@@ -181,7 +193,22 @@
     });
   }
 
-  /* ---------- Footer year ---------- */
-  const year = document.getElementById("year");
-  if (year) year.textContent = new Date().getFullYear();
+  function initFooterYear() {
+    const year = $("#year");
+    if (year) year.textContent = new Date().getFullYear();
+  }
+
+  [
+    initIcons,
+    initScrollReset,
+    initHeader,
+    initMenu,
+    initActiveLinks,
+    initReveal,
+    initCounters,
+    initRotator,
+    initMagneticButtons,
+    initCardTilt,
+    initFooterYear
+  ].forEach((init) => init());
 })();

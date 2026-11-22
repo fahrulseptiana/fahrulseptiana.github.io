@@ -15,6 +15,7 @@
   --shadow: 0 16px 40px rgba(26, 26, 24, 0.07);
   --shadow-sm: 0 8px 24px rgba(26, 26, 24, 0.06);
   --max: 1160px;
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
   --font-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Space Grotesk", var(--font-body);
 }
@@ -81,7 +82,7 @@ button { font: inherit; }
   border-radius: 999px;
   border: 2px solid var(--lime);
   cursor: pointer;
-  transition: transform 0.25s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.25s ease, background 0.25s ease;
+  transition: transform 0.25s var(--spring), box-shadow 0.25s ease, background 0.25s ease;
   will-change: transform;
 }
 .btn svg { width: 18px; height: 18px; transition: transform 0.25s ease; }
@@ -126,9 +127,9 @@ button { font: inherit; }
   font-weight: 700;
   font-size: 0.85rem;
   transform: rotate(-6deg);
-  transition: transform 0.3s cubic-bezier(.34, 1.56, .64, 1);
+  transition: transform 0.3s var(--spring);
 }
-.logo:hover .logo-mark { animation: logo-wiggle 0.5s cubic-bezier(.34, 1.56, .64, 1) forwards; }
+.logo:hover .logo-mark { animation: logo-wiggle 0.5s var(--spring) forwards; }
 .logo-text { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em; }
 
 /* Logos keep the springy slide swap */
@@ -136,7 +137,7 @@ button { font: inherit; }
 .logo-swap > span {
   grid-area: 1 / 1;
   display: block;
-  transition: opacity 0.22s ease, transform 0.4s cubic-bezier(.34, 1.56, .64, 1);
+  transition: opacity 0.22s ease, transform 0.4s var(--spring);
 }
 .logo-alias { opacity: 0; transform: translateY(110%) rotate(-4deg); white-space: nowrap; }
 .logo:hover .logo-name { opacity: 0; transform: translateY(-110%) rotate(4deg); }
@@ -145,7 +146,7 @@ button { font: inherit; }
 .logo-mark-swap { overflow: hidden; }
 .logo-mark-swap > span {
   grid-area: 1 / 1;
-  transition: opacity 0.2s ease, transform 0.4s cubic-bezier(.34, 1.56, .64, 1);
+  transition: opacity 0.2s ease, transform 0.4s var(--spring);
 }
 .mark-alias { opacity: 0; transform: translateY(110%) rotate(12deg); }
 .logo:hover .mark-name { opacity: 0; transform: translateY(-110%) rotate(-12deg); }
@@ -169,7 +170,7 @@ button { font: inherit; }
 .name-alias {
   position: relative;
   z-index: 1;
-  transition: opacity 0.2s ease, transform 0.35s cubic-bezier(.34, 1.56, .64, 1);
+  transition: opacity 0.2s ease, transform 0.35s var(--spring);
 }
 .name-alias {
   position: absolute;
@@ -193,7 +194,7 @@ button { font: inherit; }
   z-index: 0;
   transform: scaleX(0);
   transform-origin: left center;
-  transition: transform 0.35s cubic-bezier(.34, 1.56, .64, 1);
+  transition: transform 0.35s var(--spring);
 }
 .name-swap:hover .name-full { opacity: 0; }
 .name-swap:hover .name-alias { opacity: 1; transform: scale(1.02) rotate(-2deg); }
@@ -374,7 +375,7 @@ section[id] { scroll-margin-top: 90px; }
   object-fit: cover;
   object-position: center 18%;
   border-radius: 36px;
-  transition: transform 0.4s cubic-bezier(.34, 1.56, .64, 1);
+  transition: transform 0.4s var(--spring);
 }
 .profile-card:hover .avatar-photo { transform: scale(1.07) rotate(2deg); }
 .avatar-status {
@@ -487,7 +488,7 @@ section[id] { scroll-margin-top: 90px; }
   width: 240px; height: 240px;
   border-radius: 40% 60% 55% 45% / 50% 45% 55% 50%;
   background: rgba(255, 255, 255, 0.28);
-  transition: transform 0.5s cubic-bezier(.34, 1.56, .64, 1);
+  transition: transform 0.5s var(--spring);
 }
 .project-card:hover .project-thumb::before { transform: scale(1.25) rotate(20deg); }
 .project-thumb span {
@@ -589,7 +590,7 @@ section[id] { scroll-margin-top: 90px; }
   border-radius: 18px;
   margin-bottom: 24px;
   transform: rotate(-4deg);
-  transition: transform 0.3s cubic-bezier(.34, 1.56, .64, 1);
+  transition: transform 0.3s var(--spring);
 }
 .service-card:hover .service-icon { transform: rotate(4deg) scale(1.08); }
 .service-icon svg { width: 28px; height: 28px; color: var(--ink); }
